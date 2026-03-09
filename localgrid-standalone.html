@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+<title>Video Grid</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Video Grid">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+:root {
+  --bg-primary: #121212;
+  --bg-secondary: #1e1e1e;
+  --bg-tertiary: #2c2c2c;
+  --bg-hover: #3a3a3a;
+  --text-primary: #f0f0f0;
+  --text-secondary: #aaa;
+  --accent: #4a9eff;
+  --accent-hover: #5aafff;
+  --border: #444;
+  --border-light: #333;
+  --success: #4caf50;
+  --warning: #ff9800;
+}
+
+[data-theme="light"] {
+  --bg-primary: #f5f5f5;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #e8e8e8;
+  --bg-hover: #d0d0d0;
+  --text-primary: #1a1a1a;
+  --text-secondary: #666;
+  --accent: #1976d2;
+  --accent-hover: #1565c0;
+  --border: #ccc;
+  --border-light: #ddd;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0; padding: 0; width: 100%; height: 100%;
+  background: #000;
+  color: var(--text-primary);
+  font-family: -apple-system, sans-serif;
+  overflow: hidden;
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  position: relative;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ===== HEADER ===== */
+.header {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  padding-top: calc(4px + env(safe-area-inset-top));
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-light);
+  z-index: 100;
+}
+
+#folder-title {
+  flex: 1;
+  padding: 4px 8px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.header-btn {
+  padding: 4px 8px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  min-width: 38px;
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-btn:hover { background: var(--bg-hover); }
+.header-btn:active { transform: scale(0.96); }
+.header-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+#layout-select {
+  padding: 4px 6px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 12px;
+  min-height: 34px;
+  cursor: pointer;
+}
+
+/* ===== MASTER BAR ===== */
+.master-bar {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-light);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  z-index: 99;
+}
+
+.master-bar.hidden { display: none; }
+.master-bar::-webkit-scrollbar { height: 0; }
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.controls-divider {
+  width: 1px;
+  height: 22px;
+  background: var(--border);
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
+.controls-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.control-btn {
+  padding: 3px 7px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.15s ease;
+  touch-action: manipulation;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  min-width: 34px;
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.control-btn:hover { background: var(--bg-hover); }
+.control-btn:active { transform: scale(0.95); }
+.control-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.volume-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.volume-slider {
+  width: 60px;
+  height: 4px;
+  -webkit-appearance: none;
+  background: var(--border);
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+#search-input {
+  min-width: 80px;
+  width: 130px;
+  padding: 3px 7px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  border-radius: 4px;
+  font-size: 12px;
+  min-height: 30px;
+  flex-shrink: 0;
+}
+
+#search-input::placeholder { color: var(--text-secondary); }
+#search-input:focus { outline: none; border-color: var(--accent); }
+
+#status-text {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ===== POPUP PANEL ===== */
+.popup-panel {
+  display: none;
+  position: fixed;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
+  z-index: 200;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  min-width: 200px;
+}
+
+.popup-panel.open { display: block; }
+
+.popup-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.popup-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.popup-row:last-child { margin-bottom: 0; }
+
+.popup-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.popup-btn {
+  padding: 6px 12px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  min-width: 40px;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.popup-btn:hover { background: var(--bg-hover); }
+.popup-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* ===== VIDEO GRID ===== */
+#video-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  gap: 2px;
+  background: #000;
+  overflow: hidden;
+}
+
+.grid-slot {
+  position: relative;
+  overflow: hidden;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.grid-slot.audio-active {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  z-index: 1;
+}
+
+.grid-slot video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+}
+
+/* ===== VIDEO PICKER POPUP ===== */
+.picker-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 300;
+  flex-direction: column;
+  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+}
+
+.picker-overlay.open {
+  display: flex;
+}
+
+.picker-header {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.picker-header-title {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.picker-close {
+  padding: 6px 14px;
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  min-height: 36px;
+}
+
+.picker-grid {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 4px;
+  align-content: start;
+}
+
+.picker-item {
+  position: relative;
+  aspect-ratio: 16/9;
+  background: #222;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.15s ease;
+}
+
+.picker-item:hover { border-color: var(--accent); }
+.picker-item.current { border-color: var(--accent); }
+
+.picker-thumb {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.picker-thumb-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.3);
+  font-size: 24px;
+}
+
+.picker-item-label {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 2px 4px;
+  font-size: 9px;
+  color: #fff;
+  background: rgba(0,0,0,0.6);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ===== PER-VIDEO CONTROLS ===== */
+.slot-controls-panel {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(0,0,0,0.8);
+  padding: 3px 6px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.grid-slot:hover .slot-controls-panel,
+.grid-slot.overlay-visible .slot-controls-panel {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+body.hide-video-controls .slot-controls-panel {
+  display: none !important;
+}
+
+.slot-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.slot-time {
+  font-size: 10px;
+  color: rgba(255,255,255,0.7);
+  white-space: nowrap;
+  min-width: 32px;
+  font-variant-numeric: tabular-nums;
+}
+
+.slot-time.right { text-align: right; }
+
+.slot-progress {
+  flex: 1;
+  height: 4px;
+  -webkit-appearance: none;
+  background: rgba(255,255,255,0.2);
+  border-radius: 2px;
+  cursor: pointer;
+  margin: 0;
+}
+
+.slot-progress::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px; height: 12px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.slot-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.slot-controls-row::-webkit-scrollbar { height: 0; }
+
+.slot-btn {
+  padding: 2px 6px;
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  min-width: 28px;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+}
+
+.slot-btn:hover { background: rgba(255,255,255,0.25); }
+.slot-btn:active { transform: scale(0.9); }
+.slot-btn.active { background: var(--accent); }
+
+.slot-speed-select {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  font-size: 11px;
+  min-height: 28px;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+
+.slot-speed-select option { background: #333; color: #fff; }
+
+.slot-vol-slider {
+  width: 50px;
+  height: 4px;
+  -webkit-appearance: none;
+  background: rgba(255,255,255,0.2);
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.slot-vol-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px; height: 12px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.slot-queue-info {
+  font-size: 10px;
+  color: rgba(255,255,255,0.5);
+  margin-left: auto;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-secondary);
+  font-size: 16px;
+  gap: 16px;
+}
+
+.pick-btn {
+  padding: 14px 28px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 48px;
+}
+
+.pick-btn:hover { background: var(--accent-hover); }
+.pick-btn:active { transform: scale(0.96); }
+
+.popup-backdrop {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 199;
+}
+
+.popup-backdrop.open { display: block; }
+
+#file-input { display: none; }
+
+@media (max-width: 768px) {
+  .header { padding: 3px 4px; gap: 3px; }
+  #folder-title { font-size: 11px; padding: 3px 6px; }
+  .master-bar { padding: 2px 4px; gap: 3px; }
+  #search-input { width: 90px; min-width: 60px; }
+}
+
+@media (max-height: 500px) {
+  .header { padding: 2px 4px; }
+  .master-bar { padding: 2px 4px; }
+  .header-btn { min-height: 28px; min-width: 28px; padding: 2px 6px; }
+  .control-btn { min-height: 26px; min-width: 26px; padding: 2px 5px; font-size: 11px; }
+}
+</style>
+</head>
+<body>
+
+<input type="file" id="file-input" accept="video/*" multiple>
+
+<!-- HEADER -->
+<div class="header">
+  <span id="folder-title">Video Grid</span>
+  <select id="layout-select" title="Grid layout">
+    <option value="1x1">1x1</option>
+    <option value="1x2">1x2</option>
+    <option value="2x1">2x1</option>
+    <option value="2x2" selected>2x2</option>
+    <option value="2x3">2x3</option>
+    <option value="3x2">3x2</option>
+    <option value="2x4">2x4</option>
+    <option value="4x2">4x2</option>
+    <option value="3x3">3x3</option>
+    <option value="2x5">2x5</option>
+    <option value="5x2">5x2</option>
+  </select>
+  <button class="header-btn" onclick="openFilePicker()" title="Select videos from Photos">+ Videos</button>
+  <button class="header-btn" id="toggle-master" onclick="toggleMasterBar()" title="Toggle master controls">Master</button>
+  <button class="header-btn" id="toggle-vidctrl" onclick="toggleVideoControls()" title="Toggle per-video controls">Controls</button>
+  <button class="header-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle theme"></button>
+</div>
+
+<!-- Backdrop -->
+<div class="popup-backdrop" id="popup-backdrop" onclick="closeAllPopups()"></div>
+
+<!-- Speed Popup -->
+<div class="popup-panel" id="speed-popup">
+  <div class="popup-title">Master Speed</div>
+  <div class="popup-row">
+    <button class="popup-btn speed-btn" data-speed="0.25">0.25x</button>
+    <button class="popup-btn speed-btn" data-speed="0.5">0.5x</button>
+    <button class="popup-btn speed-btn" data-speed="0.75">0.75x</button>
+    <button class="popup-btn speed-btn active" data-speed="1">1x</button>
+  </div>
+  <div class="popup-row">
+    <button class="popup-btn speed-btn" data-speed="1.25">1.25x</button>
+    <button class="popup-btn speed-btn" data-speed="1.5">1.5x</button>
+    <button class="popup-btn speed-btn" data-speed="2">2x</button>
+    <button class="popup-btn speed-btn" data-speed="3">3x</button>
+  </div>
+</div>
+
+<!-- MASTER BAR -->
+<div class="master-bar" id="master-bar">
+  <div class="control-group">
+    <button class="control-btn" onclick="playAll()" title="Play All">&#9654;All</button>
+    <button class="control-btn" onclick="pauseAll()" title="Pause All">&#10074;&#10074;</button>
+    <button class="control-btn" onclick="prevAll()" title="Prev All">&#9664;&#9664;</button>
+    <button class="control-btn" onclick="nextAll()" title="Next All">&#9654;&#9654;</button>
+  </div>
+
+  <div class="controls-divider"></div>
+
+  <button class="control-btn" id="speed-popup-btn" onclick="togglePopup('speed')" title="Master speed">Spd:1x</button>
+
+  <div class="controls-divider"></div>
+
+  <div class="control-group volume-container">
+    <button class="control-btn" id="mute-btn" onclick="toggleMasterMute()" title="Mute">&#128266;</button>
+    <input type="range" class="volume-slider" id="master-volume" min="0" max="100" value="50" title="Volume">
+  </div>
+
+  <div class="controls-divider"></div>
+
+  <button class="control-btn active" id="shuffle-btn" onclick="toggleShuffle()" title="Shuffle">&#128256;</button>
+
+  <div class="controls-divider"></div>
+
+  <input type="text" id="search-input" placeholder="Filter (comma=OR)">
+
+  <div class="controls-divider"></div>
+
+  <span class="controls-label">Sort:</span>
+  <button class="control-btn sort-btn active" data-sort="name" onclick="setSort('name')">Name&#9650;</button>
+  <button class="control-btn sort-btn" data-sort="date" onclick="setSort('date')">Date</button>
+
+  <div class="controls-divider"></div>
+
+  <button class="control-btn" onclick="openFilePicker()" title="Add more videos">+ Add</button>
+
+  <div class="controls-divider"></div>
+
+  <span id="status-text">0 vids</span>
+</div>
+
+<!-- VIDEO PICKER OVERLAY -->
+<div class="picker-overlay" id="picker-overlay">
+  <div class="picker-header">
+    <span class="picker-header-title" id="picker-title">Choose a video</span>
+    <button class="picker-close" onclick="closeVideoPicker()">Close</button>
+  </div>
+  <div class="picker-grid" id="picker-grid"></div>
+</div>
+
+<!-- VIDEO GRID -->
+<div id="video-grid">
+  <div class="empty-state">
+    <div>Select videos from your Photos app</div>
+    <button class="pick-btn" onclick="openFilePicker()">Choose Videos</button>
+  </div>
+</div>
+
+<script>
+// ===== CONSTANTS =====
+const STORAGE_KEYS = {
+  theme: 'vgrid_theme',
+  layout: 'vgrid_layout',
+  speed: 'vgrid_speed',
+  volume: 'vgrid_volume',
+  sortKey: 'vgrid_sortKey',
+  sortAsc: 'vgrid_sortAsc',
+  showMaster: 'vgrid_showMaster',
+  showVidCtrl: 'vgrid_showVidCtrl'
+};
+
+const LAYOUTS = {
+  '1x1': { cols: 1, rows: 1 },
+  '1x2': { cols: 1, rows: 2 },
+  '2x1': { cols: 2, rows: 1 },
+  '2x2': { cols: 2, rows: 2 },
+  '2x3': { cols: 2, rows: 3 },
+  '3x2': { cols: 3, rows: 2 },
+  '2x4': { cols: 2, rows: 4 },
+  '4x2': { cols: 4, rows: 2 },
+  '3x3': { cols: 3, rows: 3 },
+  '2x5': { cols: 2, rows: 5 },
+  '5x2': { cols: 5, rows: 2 }
+};
+
+// ===== STATE =====
+let allVideos = [];
+let filteredVideos = [];
+let slots = [];
+let activeAudioSlot = -1;
+let currentLayout = '2x2';
+let currentSpeed = 1;
+let masterVolume = 50;
+let masterMuted = false;
+let sortKey = 'name';
+let sortAsc = true;
+let shuffleEnabled = true;
+let showMasterBar = true;
+let showVideoControls = true;
+let overlayTimers = {};
+let progressIntervals = {};
+
+// ===== INITIALIZATION =====
+function init() {
+  initTheme();
+  loadSettings();
+  setupEventListeners();
+}
+
+function loadSettings() {
+  const savedLayout = localStorage.getItem(STORAGE_KEYS.layout);
+  if (savedLayout && LAYOUTS[savedLayout]) currentLayout = savedLayout;
+  document.getElementById('layout-select').value = currentLayout;
+
+  const savedSpeed = localStorage.getItem(STORAGE_KEYS.speed);
+  if (savedSpeed) {
+    currentSpeed = parseFloat(savedSpeed);
+    updateSpeedUI();
+  }
+
+  const savedVolume = localStorage.getItem(STORAGE_KEYS.volume);
+  if (savedVolume !== null) masterVolume = parseInt(savedVolume);
+  document.getElementById('master-volume').value = masterVolume;
+
+  const savedSortKey = localStorage.getItem(STORAGE_KEYS.sortKey);
+  if (savedSortKey) sortKey = savedSortKey;
+  const savedSortAsc = localStorage.getItem(STORAGE_KEYS.sortAsc);
+  if (savedSortAsc !== null) sortAsc = savedSortAsc === 'true';
+  updateSortButtons();
+
+  const savedMaster = localStorage.getItem(STORAGE_KEYS.showMaster);
+  if (savedMaster !== null) showMasterBar = savedMaster === 'true';
+  const savedVidCtrl = localStorage.getItem(STORAGE_KEYS.showVidCtrl);
+  if (savedVidCtrl !== null) showVideoControls = savedVidCtrl === 'true';
+  applyVisibility();
+}
+
+function setupEventListeners() {
+  document.getElementById('layout-select').addEventListener('change', (e) => {
+    currentLayout = e.target.value;
+    localStorage.setItem(STORAGE_KEYS.layout, currentLayout);
+    if (filteredVideos.length > 0) buildGrid();
+  });
+
+  document.querySelectorAll('.speed-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentSpeed = parseFloat(btn.dataset.speed);
+      localStorage.setItem(STORAGE_KEYS.speed, currentSpeed);
+      updateSpeedUI();
+      applySpeedToAll();
+      closeAllPopups();
+    });
+  });
+
+  document.getElementById('master-volume').addEventListener('input', (e) => {
+    masterVolume = parseInt(e.target.value);
+    localStorage.setItem(STORAGE_KEYS.volume, masterVolume);
+    applyVolumeToActive();
+  });
+
+  let searchTimer;
+  document.getElementById('search-input').addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => applyFilterAndSort(), 300);
+  });
+
+  document.getElementById('file-input').addEventListener('change', handleFilesSelected);
+}
+
+// ===== FILE PICKER =====
+function openFilePicker() {
+  document.getElementById('file-input').click();
+}
+
+function handleFilesSelected(e) {
+  const files = Array.from(e.target.files);
+  if (files.length === 0) return;
+
+  const existingKeys = new Set(allVideos.map(v => v.name + ':' + v.file.size));
+
+  files.forEach(file => {
+    const key = file.name + ':' + file.size;
+    if (!existingKeys.has(key)) {
+      const blobUrl = URL.createObjectURL(file);
+      allVideos.push({
+        name: file.name,
+        blobUrl: blobUrl,
+        lastModified: file.lastModified,
+        file: file
+      });
+      existingKeys.add(key);
+    }
+  });
+
+  updateTitle();
+  applyFilterAndSort();
+  e.target.value = '';
+}
+
+function updateTitle() {
+  document.getElementById('folder-title').textContent = 'Video Grid: ' + allVideos.length + ' video' + (allVideos.length !== 1 ? 's' : '') + ' loaded';
+}
+
+// ===== POPUPS =====
+function togglePopup(name) {
+  const panel = document.getElementById(name + '-popup');
+  const btn = document.getElementById(name + '-popup-btn');
+  const backdrop = document.getElementById('popup-backdrop');
+  const isOpen = panel.classList.contains('open');
+  closeAllPopups();
+  if (!isOpen) {
+    const rect = btn.getBoundingClientRect();
+    panel.style.top = rect.bottom + 4 + 'px';
+    panel.style.left = '';
+    panel.style.right = '';
+    panel.classList.add('open');
+    backdrop.classList.add('open');
+    const panelRect = panel.getBoundingClientRect();
+    if (panelRect.right > window.innerWidth - 8) {
+      panel.style.left = '';
+      panel.style.right = '8px';
+    } else {
+      panel.style.left = Math.max(8, rect.left) + 'px';
+    }
+  }
+}
+
+function closeAllPopups() {
+  document.querySelectorAll('.popup-panel').forEach(p => p.classList.remove('open'));
+  document.getElementById('popup-backdrop').classList.remove('open');
+}
+
+// ===== THEME =====
+function initTheme() {
+  const savedTheme = localStorage.getItem(STORAGE_KEYS.theme) || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  updateThemeButton();
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem(STORAGE_KEYS.theme, next);
+  updateThemeButton();
+}
+
+function updateThemeButton() {
+  const btn = document.getElementById('theme-btn');
+  const theme = document.documentElement.getAttribute('data-theme');
+  btn.textContent = theme === 'dark' ? '\u2600\uFE0F' : '\uD83C\uDF19';
+}
+
+// ===== VISIBILITY =====
+function toggleMasterBar() {
+  showMasterBar = !showMasterBar;
+  localStorage.setItem(STORAGE_KEYS.showMaster, showMasterBar);
+  applyVisibility();
+}
+
+function toggleVideoControls() {
+  showVideoControls = !showVideoControls;
+  localStorage.setItem(STORAGE_KEYS.showVidCtrl, showVideoControls);
+  applyVisibility();
+}
+
+function applyVisibility() {
+  document.getElementById('master-bar').classList.toggle('hidden', !showMasterBar);
+  document.getElementById('toggle-master').classList.toggle('active', showMasterBar);
+  document.body.classList.toggle('hide-video-controls', !showVideoControls);
+  document.getElementById('toggle-vidctrl').classList.toggle('active', showVideoControls);
+}
+
+// ===== FILTER & SORT =====
+function applyFilterAndSort() {
+  const searchVal = document.getElementById('search-input').value.trim().toLowerCase();
+  let videos = [...allVideos];
+
+  if (searchVal) {
+    const terms = searchVal.split(',').map(t => t.trim()).filter(t => t);
+    videos = videos.filter(v => {
+      const name = v.name.toLowerCase();
+      return terms.some(term => name.includes(term));
+    });
+  }
+
+  if (sortKey === 'name') {
+    videos.sort((a, b) => {
+      const cmp = a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+      return sortAsc ? cmp : -cmp;
+    });
+  } else if (sortKey === 'date') {
+    videos.sort((a, b) => sortAsc ? a.lastModified - b.lastModified : b.lastModified - a.lastModified);
+  }
+
+  if (shuffleEnabled) {
+    for (let i = videos.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [videos[i], videos[j]] = [videos[j], videos[i]];
+    }
+  }
+
+  filteredVideos = videos;
+  document.getElementById('status-text').textContent = filteredVideos.length + ' vid' + (filteredVideos.length !== 1 ? 's' : '');
+  buildGrid();
+}
+
+function setSort(key) {
+  if (sortKey === key) {
+    sortAsc = !sortAsc;
+  } else {
+    sortKey = key;
+    sortAsc = key === 'name';
+  }
+  localStorage.setItem(STORAGE_KEYS.sortKey, sortKey);
+  localStorage.setItem(STORAGE_KEYS.sortAsc, sortAsc);
+  updateSortButtons();
+  applyFilterAndSort();
+}
+
+function updateSortButtons() {
+  document.querySelectorAll('.sort-btn').forEach(btn => {
+    const key = btn.dataset.sort;
+    btn.classList.toggle('active', key === sortKey);
+    if (key === sortKey) {
+      btn.textContent = (key === 'name' ? 'Name' : 'Date') + (sortAsc ? '\u25B2' : '\u25BC');
+    } else {
+      btn.textContent = key === 'name' ? 'Name' : 'Date';
+    }
+  });
+}
+
+function toggleShuffle() {
+  shuffleEnabled = !shuffleEnabled;
+  document.getElementById('shuffle-btn').classList.toggle('active', shuffleEnabled);
+  applyFilterAndSort();
+}
+
+// ===== SPEED =====
+function updateSpeedUI() {
+  document.querySelectorAll('.speed-btn').forEach(btn => {
+    btn.classList.toggle('active', parseFloat(btn.dataset.speed) === currentSpeed);
+  });
+  document.getElementById('speed-popup-btn').textContent = currentSpeed === 1 ? 'Spd:1x' : 'Spd:' + currentSpeed + 'x';
+}
+
+function applySpeedToAll() {
+  slots.forEach((slot, i) => {
+    if (slot.video) {
+      slot.video.playbackRate = currentSpeed;
+      slot.speed = currentSpeed;
+      updateSlotSpeedSelect(i);
+    }
+  });
+}
+
+// ===== VOLUME =====
+function applyVolumeToActive() {
+  if (activeAudioSlot >= 0 && activeAudioSlot < slots.length) {
+    const slot = slots[activeAudioSlot];
+    if (slot.video) slot.video.volume = masterVolume / 100;
+  }
+  updateMuteButton();
+}
+
+function toggleMasterMute() {
+  masterMuted = !masterMuted;
+  if (activeAudioSlot >= 0 && activeAudioSlot < slots.length) {
+    const slot = slots[activeAudioSlot];
+    if (slot.video) slot.video.muted = masterMuted;
+  }
+  updateMuteButton();
+}
+
+function updateMuteButton() {
+  const btn = document.getElementById('mute-btn');
+  btn.textContent = (masterMuted || activeAudioSlot < 0) ? '\uD83D\uDD07' : '\uD83D\uDD0A';
+}
+
+// ===== MASTER CONTROLS =====
+function playAll() {
+  slots.forEach(slot => {
+    if (slot.video && slot.queue.length > 0) slot.video.play().catch(() => {});
+  });
+}
+
+function pauseAll() {
+  slots.forEach(slot => {
+    if (slot.video) slot.video.pause();
+  });
+}
+
+function prevAll() {
+  slots.forEach((slot, i) => {
+    if (slot.queue.length > 0) {
+      slot.queueIndex = (slot.queueIndex - 1 + slot.queue.length) % slot.queue.length;
+      loadVideoInSlot(i);
+    }
+  });
+}
+
+function nextAll() {
+  slots.forEach((slot, i) => {
+    if (slot.queue.length > 0) {
+      slot.queueIndex = (slot.queueIndex + 1) % slot.queue.length;
+      loadVideoInSlot(i);
+    }
+  });
+}
+
+// ===== TIME FORMATTING =====
+function formatTime(seconds) {
+  if (!seconds || !isFinite(seconds)) return '0:00';
+  const s = Math.floor(seconds);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) return h + ':' + String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+  return m + ':' + String(sec).padStart(2, '0');
+}
+
+// ===== GRID BUILDING =====
+function buildGrid() {
+  disposeAllSlots();
+
+  const grid = document.getElementById('video-grid');
+  const layout = LAYOUTS[currentLayout];
+  if (!layout) return;
+
+  const slotCount = layout.cols * layout.rows;
+
+  if (filteredVideos.length === 0) {
+    grid.innerHTML = '<div class="empty-state"><div>Select videos from your Photos app</div><button class="pick-btn" onclick="openFilePicker()">Choose Videos</button></div>';
+    grid.style.gridTemplateColumns = '1fr';
+    grid.style.gridTemplateRows = '1fr';
+    slots = [];
+    return;
+  }
+
+  grid.style.gridTemplateColumns = 'repeat(' + layout.cols + ', 1fr)';
+  grid.style.gridTemplateRows = 'repeat(' + layout.rows + ', 1fr)';
+  grid.innerHTML = '';
+
+  const queues = distributeVideos(filteredVideos, slotCount);
+
+  slots = [];
+  for (let i = 0; i < slotCount; i++) {
+    const slotEl = document.createElement('div');
+    slotEl.className = 'grid-slot';
+    slotEl.dataset.slotIndex = i;
+
+    // Native video element — no Video.js needed
+    const videoEl = document.createElement('video');
+    videoEl.setAttribute('playsinline', '');
+    videoEl.setAttribute('preload', 'auto');
+    videoEl.setAttribute('muted', '');
+    videoEl.muted = true;
+    slotEl.appendChild(videoEl);
+
+    const controlsPanel = createControlsPanel(i);
+    slotEl.appendChild(controlsPanel);
+
+    setupTouchOverlay(slotEl, i);
+    grid.appendChild(slotEl);
+
+    slots.push({
+      element: slotEl,
+      video: videoEl,
+      queue: queues[i] || [],
+      queueIndex: 0,
+      currentVideo: null,
+      speed: currentSpeed,
+      loopOne: false,
+      isSeeking: false
+    });
+  }
+
+  // Stagger playback start
+  slots.forEach((slot, i) => {
+    setTimeout(() => initSlot(i), i * 75);
+  });
+}
+
+function distributeVideos(videos, slotCount) {
+  const queues = Array.from({ length: slotCount }, () => []);
+  if (videos.length === 0 || slotCount === 0) return queues;
+
+  let slotIdx = 0;
+  videos.forEach(v => {
+    queues[slotIdx % slotCount].push(v);
+    slotIdx++;
+  });
+
+  return queues;
+}
+
+function createControlsPanel(slotIndex) {
+  const panel = document.createElement('div');
+  panel.className = 'slot-controls-panel';
+  panel.innerHTML =
+    '<div class="slot-progress-row">' +
+      '<span class="slot-time" id="slot-curtime-' + slotIndex + '">0:00</span>' +
+      '<input type="range" class="slot-progress" id="slot-progress-' + slotIndex + '" min="0" max="1000" value="0" step="1">' +
+      '<span class="slot-time right" id="slot-remaining-' + slotIndex + '">-0:00</span>' +
+    '</div>' +
+    '<div class="slot-controls-row">' +
+      '<button class="slot-btn play-btn" id="slot-play-' + slotIndex + '" onclick="toggleSlotPlayback(' + slotIndex + ')" title="Play/Pause">&#9654;</button>' +
+      '<button class="slot-btn" onclick="prevSlot(' + slotIndex + ')" title="Previous">&#9664;</button>' +
+      '<button class="slot-btn" onclick="nextSlot(' + slotIndex + ')" title="Next">&#9654;</button>' +
+      '<button class="slot-btn" id="slot-mute-' + slotIndex + '" onclick="setAudioSlot(' + slotIndex + ')" title="Audio">&#128266;</button>' +
+      '<input type="range" class="slot-vol-slider" id="slot-vol-' + slotIndex + '" min="0" max="100" value="50" title="Volume">' +
+      '<select class="slot-speed-select" id="slot-speed-' + slotIndex + '" onchange="setSlotSpeed(' + slotIndex + ', this.value)" title="Speed">' +
+        '<option value="0.25">0.25x</option>' +
+        '<option value="0.5">0.5x</option>' +
+        '<option value="0.75">0.75x</option>' +
+        '<option value="1" selected>1x</option>' +
+        '<option value="1.25">1.25x</option>' +
+        '<option value="1.5">1.5x</option>' +
+        '<option value="2">2x</option>' +
+        '<option value="3">3x</option>' +
+      '</select>' +
+      '<button class="slot-btn" id="slot-loop-' + slotIndex + '" onclick="toggleSlotLoop(' + slotIndex + ')" title="Loop current">&#128257;</button>' +
+      '<button class="slot-btn" onclick="openVideoPicker(' + slotIndex + ')" title="Choose video">&#127916;</button>' +
+      '<span class="slot-queue-info" id="slot-info-' + slotIndex + '">0/0</span>' +
+    '</div>';
+
+  const progressSlider = panel.querySelector('#slot-progress-' + slotIndex);
+  progressSlider.addEventListener('input', () => {
+    const slot = slots[slotIndex];
+    if (slot) slot.isSeeking = true;
+  });
+  progressSlider.addEventListener('change', () => {
+    const slot = slots[slotIndex];
+    if (!slot || !slot.video) return;
+    const dur = slot.video.duration;
+    if (dur && isFinite(dur)) slot.video.currentTime = dur * (parseInt(progressSlider.value) / 1000);
+    slot.isSeeking = false;
+  });
+
+  const volSlider = panel.querySelector('#slot-vol-' + slotIndex);
+  volSlider.addEventListener('input', () => {
+    const slot = slots[slotIndex];
+    if (!slot || !slot.video) return;
+    if (slotIndex === activeAudioSlot) slot.video.volume = parseInt(volSlider.value) / 100;
+  });
+
+  return panel;
+}
+
+function setupTouchOverlay(slotEl, slotIndex) {
+  slotEl.addEventListener('touchstart', (e) => {
+    if (e.target.closest('.slot-btn, .slot-progress, .slot-vol-slider, .slot-speed-select')) return;
+    const isVisible = slotEl.classList.contains('overlay-visible');
+    document.querySelectorAll('.grid-slot').forEach(s => s.classList.remove('overlay-visible'));
+    if (!isVisible) {
+      slotEl.classList.add('overlay-visible');
+      clearTimeout(overlayTimers[slotIndex]);
+      overlayTimers[slotIndex] = setTimeout(() => slotEl.classList.remove('overlay-visible'), 4000);
+    }
+  }, { passive: true });
+}
+
+// ===== SLOT MANAGEMENT (native video) =====
+function initSlot(slotIndex) {
+  const slot = slots[slotIndex];
+  if (!slot || slot.queue.length === 0) return;
+
+  const video = slot.video;
+
+  video.addEventListener('ended', () => {
+    if (slot.loopOne) {
+      video.currentTime = 0;
+      video.play().catch(() => {});
+    } else {
+      advanceSlot(slotIndex);
+    }
+  });
+
+  video.addEventListener('error', () => {
+    console.warn('Error in slot ' + slotIndex + ', advancing...');
+    setTimeout(() => advanceSlot(slotIndex), 500);
+  });
+
+  video.addEventListener('play', () => updateSlotPlayButton(slotIndex, true));
+  video.addEventListener('pause', () => updateSlotPlayButton(slotIndex, false));
+
+  progressIntervals[slotIndex] = setInterval(() => {
+    if (!slot.video || slot.isSeeking) return;
+    const cur = slot.video.currentTime;
+    const dur = slot.video.duration;
+    if (!dur || !isFinite(dur)) return;
+    const progressEl = document.getElementById('slot-progress-' + slotIndex);
+    const curTimeEl = document.getElementById('slot-curtime-' + slotIndex);
+    const remTimeEl = document.getElementById('slot-remaining-' + slotIndex);
+    if (progressEl) progressEl.value = Math.floor((cur / dur) * 1000);
+    if (curTimeEl) curTimeEl.textContent = formatTime(cur);
+    if (remTimeEl) remTimeEl.textContent = '-' + formatTime(dur - cur);
+  }, 500);
+
+  updateSlotSpeedSelect(slotIndex);
+  const volSlider = document.getElementById('slot-vol-' + slotIndex);
+  if (volSlider) volSlider.value = masterVolume;
+
+  loadVideoInSlot(slotIndex);
+}
+
+function loadVideoInSlot(slotIndex) {
+  const slot = slots[slotIndex];
+  if (!slot || !slot.video || slot.queue.length === 0) return;
+
+  const videoData = slot.queue[slot.queueIndex];
+  slot.currentVideo = videoData;
+
+  slot.video.src = videoData.blobUrl;
+  slot.video.muted = (slotIndex !== activeAudioSlot);
+  if (slotIndex === activeAudioSlot) {
+    const volSlider = document.getElementById('slot-vol-' + slotIndex);
+    slot.video.volume = (volSlider ? parseInt(volSlider.value) : masterVolume) / 100;
+    slot.video.muted = masterMuted;
+  }
+
+  slot.video.playbackRate = slot.speed;
+  slot.video.play().catch(() => {});
+
+  const infoEl = document.getElementById('slot-info-' + slotIndex);
+  if (infoEl) infoEl.textContent = (slot.queueIndex + 1) + '/' + slot.queue.length;
+
+  const progressEl = document.getElementById('slot-progress-' + slotIndex);
+  if (progressEl) progressEl.value = 0;
+  const curTimeEl = document.getElementById('slot-curtime-' + slotIndex);
+  if (curTimeEl) curTimeEl.textContent = '0:00';
+  const remTimeEl = document.getElementById('slot-remaining-' + slotIndex);
+  if (remTimeEl) remTimeEl.textContent = '-0:00';
+}
+
+function advanceSlot(slotIndex) {
+  const slot = slots[slotIndex];
+  if (!slot || slot.queue.length === 0) return;
+  slot.queueIndex = (slot.queueIndex + 1) % slot.queue.length;
+  loadVideoInSlot(slotIndex);
+}
+
+function disposeAllSlots() {
+  Object.values(progressIntervals).forEach(id => clearInterval(id));
+  progressIntervals = {};
+  slots.forEach(slot => {
+    if (slot.video) {
+      try { slot.video.pause(); slot.video.removeAttribute('src'); slot.video.load(); } catch (e) {}
+    }
+  });
+  slots = [];
+  activeAudioSlot = -1;
+  updateMuteButton();
+}
+
+// ===== PER-SLOT CONTROLS =====
+function toggleSlotPlayback(slotIndex) {
+  const slot = slots[slotIndex];
+  if (!slot || !slot.video) return;
+  if (slot.video.paused) slot.video.play().catch(() => {});
+  else slot.video.pause();
+}
+
+function updateSlotPlayButton(slotIndex, isPlaying) {
+  const btn = document.getElementById('slot-play-' + slotIndex);
+  if (btn) btn.innerHTML = isPlaying ? '&#10074;&#10074;' : '&#9654;';
+}
+
+function prevSlot(slotIndex) {
+  const slot = slots[slotIndex];
+  if (!slot || slot.queue.length === 0) return;
+  slot.queueIndex = (slot.queueIndex - 1 + slot.queue.length) % slot.queue.length;
+  loadVideoInSlot(slotIndex);
+}
+
+function nextSlot(slotIndex) {
+  const slot = slots[slotIndex];
+  if (!slot || slot.queue.length === 0) return;
+  slot.queueIndex = (slot.queueIndex + 1) % slot.queue.length;
+  loadVideoInSlot(slotIndex);
+}
+
+function setSlotSpeed(slotIndex, value) {
+  const slot = slots[slotIndex];
+  if (!slot || !slot.video) return;
+  slot.speed = parseFloat(value);
+  slot.video.playbackRate = slot.speed;
+}
+
+function updateSlotSpeedSelect(slotIndex) {
+  const sel = document.getElementById('slot-speed-' + slotIndex);
+  if (sel && slots[slotIndex]) sel.value = String(slots[slotIndex].speed);
+}
+
+function toggleSlotLoop(slotIndex) {
+  const slot = slots[slotIndex];
+  if (!slot) return;
+  slot.loopOne = !slot.loopOne;
+  const btn = document.getElementById('slot-loop-' + slotIndex);
+  if (btn) btn.classList.toggle('active', slot.loopOne);
+}
+
+function setAudioSlot(slotIndex) {
+  if (activeAudioSlot === slotIndex) {
+    activeAudioSlot = -1;
+    slots.forEach(slot => {
+      if (slot.video) slot.video.muted = true;
+    });
+  } else {
+    activeAudioSlot = slotIndex;
+    slots.forEach((slot, i) => {
+      if (slot.video) {
+        if (i === slotIndex) {
+          const volSlider = document.getElementById('slot-vol-' + i);
+          slot.video.muted = masterMuted;
+          slot.video.volume = (volSlider ? parseInt(volSlider.value) : masterVolume) / 100;
+        } else {
+          slot.video.muted = true;
+        }
+      }
+    });
+  }
+  updateMuteButton();
+  updateAudioHighlights();
+}
+
+function updateAudioHighlights() {
+  document.querySelectorAll('.grid-slot').forEach((el, i) => {
+    el.classList.toggle('audio-active', i === activeAudioSlot);
+  });
+  slots.forEach((_, i) => {
+    const btn = document.getElementById('slot-mute-' + i);
+    if (btn) btn.classList.toggle('active', i === activeAudioSlot);
+  });
+}
+
+// ===== VIDEO PICKER =====
+let pickerSlotIndex = -1;
+const thumbnailCache = new Map();
+
+function generateThumbnail(video) {
+  const key = video.name + ':' + video.file.size;
+  if (thumbnailCache.has(key)) return Promise.resolve(thumbnailCache.get(key));
+
+  return new Promise((resolve) => {
+    let resolved = false;
+    const vid = document.createElement('video');
+
+    vid.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;';
+    vid.preload = 'auto';
+    vid.muted = true;
+    vid.playsInline = true;
+    vid.setAttribute('playsinline', '');
+    vid.setAttribute('muted', '');
+    document.body.appendChild(vid);
+
+    const done = (val) => {
+      if (resolved) return;
+      resolved = true;
+      if (val) thumbnailCache.set(key, val);
+      try { vid.pause(); vid.removeAttribute('src'); vid.load(); } catch(e) {}
+      try { document.body.removeChild(vid); } catch(e) {}
+      resolve(val);
+    };
+
+    function tryCapture() {
+      if (resolved) return;
+      try {
+        const w = vid.videoWidth || 320;
+        const h = vid.videoHeight || 180;
+        if (w === 0 || h === 0) { done(null); return; }
+        const canvas = document.createElement('canvas');
+        const scale = Math.min(320 / w, 180 / h, 1);
+        canvas.width = Math.round(w * scale);
+        canvas.height = Math.round(h * scale);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+        done(dataUrl);
+      } catch (e) {
+        done(null);
+      }
+    }
+
+    vid.addEventListener('seeked', () => {
+      setTimeout(tryCapture, 100);
+    }, { once: true });
+
+    vid.addEventListener('loadeddata', () => {
+      if (!resolved) {
+        const seekTo = vid.duration > 2 ? 1 : vid.duration * 0.1;
+        if (seekTo > 0 && isFinite(seekTo)) {
+          vid.currentTime = seekTo;
+        } else {
+          setTimeout(tryCapture, 200);
+        }
+      }
+    }, { once: true });
+
+    vid.addEventListener('loadedmetadata', () => {
+      if (!resolved) {
+        vid.play().then(() => {
+          setTimeout(() => {
+            vid.pause();
+            const seekTo = vid.duration > 2 ? 1 : vid.duration * 0.1;
+            if (seekTo > 0 && isFinite(seekTo)) {
+              vid.currentTime = seekTo;
+            }
+          }, 200);
+        }).catch(() => {
+          const seekTo = vid.duration > 2 ? 1 : vid.duration * 0.1;
+          if (seekTo > 0 && isFinite(seekTo)) {
+            vid.currentTime = seekTo;
+          }
+        });
+      }
+    }, { once: true });
+
+    vid.addEventListener('error', () => done(null), { once: true });
+    vid.src = video.blobUrl;
+    setTimeout(() => done(null), 10000);
+  });
+}
+
+async function generateThumbnailsSequentially(itemMap) {
+  for (const { item, video } of itemMap) {
+    const key = video.name + ':' + video.file.size;
+    if (thumbnailCache.has(key)) continue;
+    const dataUrl = await generateThumbnail(video);
+    if (!item || !item.parentNode) continue;
+    if (dataUrl) {
+      const placeholder = item.querySelector('.picker-thumb-placeholder');
+      if (placeholder) placeholder.remove();
+      const existing = item.querySelector('.picker-thumb');
+      if (existing) existing.remove();
+      const img = document.createElement('img');
+      img.className = 'picker-thumb';
+      img.src = dataUrl;
+      item.insertBefore(img, item.firstChild);
+    }
+  }
+}
+
+function openVideoPicker(slotIndex) {
+  pickerSlotIndex = slotIndex;
+  const overlay = document.getElementById('picker-overlay');
+  const grid = document.getElementById('picker-grid');
+  const slot = slots[slotIndex];
+
+  document.getElementById('picker-title').textContent = 'Slot ' + (slotIndex + 1) + ' \u2014 Choose a video';
+  grid.innerHTML = '';
+  overlay.classList.add('open');
+
+  const uncachedItems = [];
+  allVideos.forEach((video, vidIdx) => {
+    const item = document.createElement('div');
+    item.className = 'picker-item';
+    if (slot && slot.currentVideo === video) item.classList.add('current');
+    item.onclick = () => pickVideoForSlot(slotIndex, vidIdx);
+
+    const key = video.name + ':' + video.file.size;
+    if (thumbnailCache.has(key)) {
+      const img = document.createElement('img');
+      img.className = 'picker-thumb';
+      img.src = thumbnailCache.get(key);
+      item.appendChild(img);
+    } else {
+      item.innerHTML = '<div class="picker-thumb-placeholder">&#9654;</div>';
+      uncachedItems.push({ item, video });
+    }
+
+    const label = document.createElement('div');
+    label.className = 'picker-item-label';
+    label.textContent = video.name;
+    item.appendChild(label);
+
+    grid.appendChild(item);
+  });
+
+  if (uncachedItems.length > 0) {
+    generateThumbnailsSequentially(uncachedItems);
+  }
+}
+
+function closeVideoPicker() {
+  document.getElementById('picker-overlay').classList.remove('open');
+  pickerSlotIndex = -1;
+}
+
+function pickVideoForSlot(slotIndex, videoIndex) {
+  const slot = slots[slotIndex];
+  if (!slot) return;
+
+  const video = allVideos[videoIndex];
+  const queueIdx = slot.queue.indexOf(video);
+  if (queueIdx >= 0) {
+    slot.queueIndex = queueIdx;
+  } else {
+    slot.queue.splice(slot.queueIndex, 0, video);
+  }
+  loadVideoInSlot(slotIndex);
+  closeVideoPicker();
+}
+
+// ===== CLEANUP =====
+window.addEventListener('beforeunload', () => {
+  disposeAllSlots();
+  allVideos.forEach(v => {
+    try { URL.revokeObjectURL(v.blobUrl); } catch (e) {}
+  });
+});
+
+// ===== START =====
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
